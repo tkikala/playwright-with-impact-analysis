@@ -38,10 +38,40 @@ test('adds executed Playwright JSON report tests to a matrix', async () => {
     testCount: 0
   };
 
-  await addTestsFromPlaywrightJsonReport(matrix, 'test-results.json', repoRoot);
+  await addTestsFromPlaywrightJsonReport(matrix, 'test-results.json', repoRoot, {
+    testDir: 'e2e/tests'
+  });
 
   assert.deepEqual(Object.keys(matrix.tests), [
     'tests/cart.spec.ts::chromium::adds product to cart'
   ]);
   assert.equal(matrix.testCount, 1);
+});
+
+test('prefixes basename-only Playwright JSON report specs with a test directory', async () => {
+  const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'pw-impact-report-basename-'));
+  await fs.writeFile(path.join(repoRoot, 'test-results.json'), JSON.stringify({
+    suites: [{
+      title: 'cart.spec.ts',
+      file: 'cart.spec.ts',
+      specs: [{
+        title: 'adds product to cart',
+        file: 'cart.spec.ts',
+        tests: [{
+          projectName: 'chromium',
+          status: 'expected',
+          results: [{ status: 'passed' }]
+        }]
+      }]
+    }]
+  }));
+
+  const matrix = { tests: {}, files: {}, testCount: 0 };
+  await addTestsFromPlaywrightJsonReport(matrix, 'test-results.json', repoRoot, {
+    testDir: 'e2e/tests'
+  });
+
+  assert.deepEqual(Object.keys(matrix.tests), [
+    'e2e/tests/cart.spec.ts::chromium::adds product to cart'
+  ]);
 });

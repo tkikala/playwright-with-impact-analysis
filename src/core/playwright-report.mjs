@@ -3,12 +3,12 @@ import path from 'node:path';
 import { normalizeRepoPath } from './coverage.mjs';
 import { makeTestId } from './matrix.mjs';
 
-export async function addTestsFromPlaywrightJsonReport(matrix, reportPath, repoRoot = process.cwd()) {
+export async function addTestsFromPlaywrightJsonReport(matrix, reportPath, repoRoot = process.cwd(), options = {}) {
   if (!reportPath) return matrix;
 
   const resolvedReportPath = path.resolve(repoRoot, reportPath);
   const report = JSON.parse(await fs.readFile(resolvedReportPath, 'utf8'));
-  const records = extractTestsFromSuites(report.suites ?? [], [], repoRoot);
+  const records = extractTestsFromSuites(report.suites ?? [], [], repoRoot, options);
 
   for (const record of records) {
     const testId = makeTestId(record);
@@ -24,14 +24,14 @@ export async function addTestsFromPlaywrightJsonReport(matrix, reportPath, repoR
   return matrix;
 }
 
-function extractTestsFromSuites(suites, parents, repoRoot) {
+function extractTestsFromSuites(suites, parents, repoRoot, options) {
   const records = [];
   for (const suite of suites) {
     const nextParents = suite.title ? [...parents, suite.title] : parents;
-    const suiteFile = suite.file ? normalizeRepoPath(suite.file, repoRoot) : null;
+    const suiteFile = normalizeReportSpecPath(suite.file, repoRoot, options);
 
     for (const spec of suite.specs ?? []) {
-      const specFile = normalizeRepoPath(spec.file ?? suite.file, repoRoot) ?? suiteFile;
+      const specFile = normalizeReportSpecPath(spec.file ?? suite.file, repoRoot, options) ?? suiteFile;
       if (!specFile) continue;
 
       for (const test of spec.tests ?? []) {
@@ -49,9 +49,18 @@ function extractTestsFromSuites(suites, parents, repoRoot) {
       }
     }
 
-    records.push(...extractTestsFromSuites(suite.suites ?? [], nextParents, repoRoot));
+    records.push(...extractTestsFromSuites(suite.suites ?? [], nextParents, repoRoot, options));
   }
   return records;
+}
+
+function normalizeReportSpecPath(filePath, repoRoot, options) {
+  const normalized = normalizeRepoPath(filePath, repoRoot);
+  if (!normalized) return null;
+  if (options.testDir && !normalized.includes('/')) {
+    return normalizeRepoPath(path.posix.join(options.testDir, normalized), repoRoot);
+  }
+  return normalized;
 }
 
 function isExecuted(test) {

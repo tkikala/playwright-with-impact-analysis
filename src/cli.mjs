@@ -44,6 +44,8 @@ Options:
   --source-roots      Comma or newline separated source roots. Default: src
   --playwright-json-report
                       Optional Playwright JSON report to include all executed tests
+  --playwright-test-dir
+                      Optional directory for basename-only JSON report spec paths
   --fallback          full or none. Default: full
   --test-command      Default: npx playwright test
 `);
@@ -76,7 +78,9 @@ async function main() {
       baseCommit: await getHeadCommit(repoRoot),
       sourceRoots
     });
-    await addTestsFromPlaywrightJsonReport(matrix, args['playwright-json-report'], repoRoot);
+    await addTestsFromPlaywrightJsonReport(matrix, args['playwright-json-report'], repoRoot, {
+      testDir: args['playwright-test-dir']
+    });
     await writeMatrix(matrix, matrixPath, repoRoot);
     console.log(`Recorded ${matrix.testCount} tests across ${matrix.fileCount} files.`);
     return;
