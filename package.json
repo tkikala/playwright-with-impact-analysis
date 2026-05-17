@@ -1,0 +1,38 @@
+{
+  "name": "playwright-impact-analysis",
+  "version": "0.1.0",
+  "description": "Deterministic Playwright test impact analysis from frontend runtime coverage.",
+  "type": "module",
+  "main": "src/cli.mjs",
+  "bin": {
+    "pw-impact": "src/cli.mjs"
+  },
+  "exports": {
+    ".": "./src/index.mjs",
+    "./playwright": "./src/playwright/impact-fixture.mjs"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "check": "node src/cli.mjs --help"
+  },
+  "keywords": [
+    "playwright",
+    "github-action",
+    "test-impact-analysis",
+    "coverage",
+    "ci"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "peerDependencies": {
+    "@playwright/test": ">=1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "@playwright/test": {
+      "optional": true
+    }
+  },
+  "devDependencies": {}
+}

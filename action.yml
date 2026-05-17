@@ -1,0 +1,69 @@
+name: Playwright Impact Analysis
+description: Run only the Playwright specs impacted by frontend runtime coverage.
+author: playwright-impact-analysis
+
+branding:
+  icon: zap
+  color: blue
+
+inputs:
+  mode:
+    description: "record, run, select, or auto. auto records on main pushes and runs on pull requests."
+    required: false
+    default: auto
+  test-command:
+    description: "Base Playwright command. Impacted spec paths are appended in run mode."
+    required: false
+    default: npx playwright test
+  matrix-path:
+    description: "Path to the generated dependency matrix."
+    required: false
+    default: .playwright-impact/matrix.json
+  coverage-dir:
+    description: "Directory where the Playwright fixture writes per-test coverage records."
+    required: false
+    default: .playwright-impact/coverage
+  base-ref:
+    description: "Git ref used for PR diffs."
+    required: false
+    default: origin/main
+  changed-files:
+    description: "Optional newline or comma separated changed file list. When omitted, git diff is used."
+    required: false
+    default: ""
+  fallback:
+    description: "What to do when impact cannot be proven: full or none."
+    required: false
+    default: full
+  matrix-storage:
+    description: "Where to load/save the matrix: file, branch, or none."
+    required: false
+    default: branch
+  data-branch:
+    description: "Hidden branch used for matrix persistence when matrix-storage=branch."
+    required: false
+    default: playwright-impact-data
+  github-token:
+    description: "GitHub token used to push the matrix data branch."
+    required: false
+    default: ${{ github.token }}
+  working-directory:
+    description: "Repository directory where commands should run."
+    required: false
+    default: "."
+  global-change-patterns:
+    description: "Comma/newline separated paths that should force a full suite."
+    required: false
+    default: "package.json,package-lock.json,pnpm-lock.yaml,yarn.lock,bun.lockb,playwright.config.ts,playwright.config.js,vite.config.ts,vite.config.js,webpack.config.js,tsconfig.json"
+
+outputs:
+  decision:
+    description: "full, selected, or none."
+  specs:
+    description: "Newline separated impacted Playwright spec files."
+  reason:
+    description: "Human readable explanation of the decision."
+
+runs:
+  using: node20
+  main: src/action.mjs

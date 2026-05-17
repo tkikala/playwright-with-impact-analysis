@@ -1,0 +1,33 @@
+name: Playwright Impact
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  playwright:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install --with-deps
+
+      - name: Run impacted Playwright tests
+        uses: your-org/playwright-impact-analysis@v1
+        with:
+          mode: auto
+          test-command: npx playwright test
+          matrix-storage: branch
