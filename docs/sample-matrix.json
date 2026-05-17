@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "generatedAt": "2026-05-17T12:00:00.000Z",
+  "baseCommit": "demo",
+  "files": {
+    "src/App.tsx": [
+      "tests/app.spec.ts::chromium::renders app",
+      "tests/navigation.spec.ts::chromium::opens dashboard"
+    ],
+    "src/components/Button.tsx": [
+      "tests/button.spec.ts::chromium::renders primary button",
+      "tests/checkout.spec.ts::chromium::submits checkout"
+    ],
+    "src/components/UserMenu.tsx": [
+      "tests/navigation.spec.ts::chromium::opens dashboard",
+      "tests/settings.spec.ts::chromium::updates profile"
+    ],
+    "src/pages/Dashboard.tsx": [
+      "tests/dashboard.spec.ts::chromium::shows metrics",
+      "tests/navigation.spec.ts::chromium::opens dashboard"
+    ],
+    "src/pages/Settings.tsx": [
+      "tests/settings.spec.ts::chromium::updates profile"
+    ],
+    "src/lib/api.ts": [
+      "tests/dashboard.spec.ts::chromium::shows metrics",
+      "tests/checkout.spec.ts::chromium::submits checkout"
+    ]
+  },
+  "tests": {
+    "tests/app.spec.ts::chromium::renders app": {
+      "spec": "tests/app.spec.ts",
+      "title": "renders app",
+      "project": "chromium",
+      "files": [
+        "src/App.tsx"
+      ]
+    },
+    "tests/button.spec.ts::chromium::renders primary button": {
+      "spec": "tests/button.spec.ts",
+      "title": "renders primary button",
+      "project": "chromium",
+      "files": [
+        "src/components/Button.tsx"
+      ]
+    },
+    "tests/checkout.spec.ts::chromium::submits checkout": {
+      "spec": "tests/checkout.spec.ts",
+      "title": "submits checkout",
+      "project": "chromium",
+      "files": [
+        "src/components/Button.tsx",
+        "src/lib/api.ts"
+      ]
+    },
+    "tests/dashboard.spec.ts::chromium::shows metrics": {
+      "spec": "tests/dashboard.spec.ts",
+      "title": "shows metrics",
+      "project": "chromium",
+      "files": [
+        "src/pages/Dashboard.tsx",
+        "src/lib/api.ts"
+      ]
+    },
+    "tests/navigation.spec.ts::chromium::opens dashboard": {
+      "spec": "tests/navigation.spec.ts",
+      "title": "opens dashboard",
+      "project": "chromium",
+      "files": [
+        "src/App.tsx",
+        "src/components/UserMenu.tsx",
+        "src/pages/Dashboard.tsx"
+      ]
+    },
+    "tests/settings.spec.ts::chromium::updates profile": {
+      "spec": "tests/settings.spec.ts",
+      "title": "updates profile",
+      "project": "chromium",
+      "files": [
+        "src/components/UserMenu.tsx",
+        "src/pages/Settings.tsx"
+      ]
+    }
+  },
+  "testCount": 6,
+  "fileCount": 6
+}

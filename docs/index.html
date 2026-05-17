@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Playwright Impact Map</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Playwright Impact Analysis</p>
+          <h1>SUT Code Map</h1>
+        </div>
+        <div class="actions">
+          <label class="file-picker">
+            <input id="matrixFile" type="file" accept="application/json,.json">
+            Load matrix
+          </label>
+          <button id="resetSample" type="button">Sample</button>
+        </div>
+      </header>
+
+      <section class="summary" aria-label="Matrix summary">
+        <div>
+          <span id="fileCount">0</span>
+          <small>SUT files</small>
+        </div>
+        <div>
+          <span id="testCount">0</span>
+          <small>Playwright tests</small>
+        </div>
+        <div>
+          <span id="edgeCount">0</span>
+          <small>Coverage links</small>
+        </div>
+        <div>
+          <span id="generatedAt">Sample</span>
+          <small>Matrix source</small>
+        </div>
+      </section>
+
+      <section class="toolbar" aria-label="Visualization controls">
+        <input id="search" type="search" placeholder="Filter files or tests">
+        <select id="groupFilter" aria-label="Filter by SUT group">
+          <option value="">All groups</option>
+        </select>
+        <select id="density" aria-label="Map density">
+          <option value="all">All links</option>
+          <option value="selected">Selected only</option>
+        </select>
+      </section>
+
+      <section class="workspace" aria-label="Impact visualization">
+        <div class="lane">
+          <div class="lane-heading">
+            <h2>SUT files</h2>
+            <span id="visibleFileCount">0 visible</span>
+          </div>
+          <div id="fileMap" class="node-list" aria-label="SUT files"></div>
+        </div>
+
+        <div class="graph-wrap" aria-hidden="true">
+          <svg id="edgeLayer" class="edge-layer"></svg>
+        </div>
+
+        <div class="lane">
+          <div class="lane-heading">
+            <h2>Playwright specs</h2>
+            <span id="visibleTestCount">0 visible</span>
+          </div>
+          <div id="testMap" class="node-list" aria-label="Playwright specs"></div>
+        </div>
+      </section>
+
+      <aside id="details" class="details" aria-live="polite"></aside>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

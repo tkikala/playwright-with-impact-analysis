@@ -6,6 +6,8 @@ This tool records which frontend source files each Playwright test actually exec
 
 The first MVP is intentionally frontend-only. Backend and cross-repo impact can be added later without changing the core product shape.
 
+Visualize a matrix with the GitHub Pages app: https://tkikala.github.io/playwright-with-impact-analysis/
+
 ## What It Does
 
 - Records per-test frontend runtime coverage from `window.__coverage__`.
