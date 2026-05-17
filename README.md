@@ -8,6 +8,8 @@ The first MVP is intentionally frontend-only. Backend and cross-repo impact can 
 
 Visualize a matrix with the GitHub Pages app: https://tkikala.github.io/playwright-with-impact-analysis/
 
+The Pages deployment publishes a matrix catalog. Each Pages pipeline run generates a fresh matrix snapshot, preserves previously published snapshots, and writes `data/manifest.json` so the UI can open the latest matrix or choose an older run from the selector.
+
 ## What It Does
 
 - Records per-test frontend runtime coverage from `window.__coverage__`.

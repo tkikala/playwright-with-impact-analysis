@@ -14,6 +14,8 @@ test('GitHub Pages app has the assets required to render a matrix', async () => 
 
   assert.match(html, /styles\.css/);
   assert.match(html, /app\.js/);
+  assert.match(html, /matrixCatalog/);
+  assert.match(app, /data\/manifest\.json/);
   assert.match(app, /sample-matrix\.json/);
   assert.match(app, /sourceFiles/);
   assert.match(css, /\.edge/);

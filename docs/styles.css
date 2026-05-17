@@ -95,6 +95,13 @@ button {
   font-weight: 700;
 }
 
+#matrixCatalog {
+  min-height: 40px;
+  max-width: 280px;
+  padding: 8px 10px;
+  font-weight: 700;
+}
+
 .file-picker input {
   position: absolute;
   inline-size: 1px;

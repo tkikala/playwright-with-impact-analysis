@@ -12,6 +12,7 @@ const state = {
 
 const els = {
   matrixFile: document.querySelector('#matrixFile'),
+  matrixCatalog: document.querySelector('#matrixCatalog'),
   resetSample: document.querySelector('#resetSample'),
   search: document.querySelector('#search'),
   groupFilter: document.querySelector('#groupFilter'),
@@ -32,6 +33,9 @@ const els = {
   coverageFilter: document.querySelector('#coverageFilter')
 };
 
+els.matrixCatalog.addEventListener('change', () => {
+  if (els.matrixCatalog.value) loadCatalogMatrix(els.matrixCatalog.value);
+});
 els.matrixFile.addEventListener('change', handleFileUpload);
 els.resetSample.addEventListener('click', () => loadSample());
 els.search.addEventListener('input', () => {
@@ -52,12 +56,60 @@ els.coverageFilter.addEventListener('change', () => {
 });
 window.addEventListener('resize', () => requestAnimationFrame(renderEdges));
 
-loadSample();
+loadCatalog();
 
 async function loadSample() {
   const response = await fetch('sample-matrix.json');
   const matrix = await response.json();
   setMatrix(matrix, 'Sample');
+}
+
+async function loadCatalog() {
+  try {
+    const response = await fetch('data/manifest.json', { cache: 'no-store' });
+    if (!response.ok) throw new Error(`No matrix catalog found: ${response.status}`);
+    const manifest = await response.json();
+    renderCatalog(manifest.entries ?? []);
+    if (manifest.latest) {
+      await loadCatalogMatrix(manifest.latest);
+      els.matrixCatalog.value = manifest.latest;
+      return;
+    }
+  } catch {
+    renderCatalog([]);
+  }
+
+  await loadSample();
+}
+
+function renderCatalog(entries) {
+  els.matrixCatalog.innerHTML = '';
+  if (!entries.length) {
+    const option = document.createElement('option');
+    option.value = '';
+    option.textContent = 'Sample matrix';
+    els.matrixCatalog.append(option);
+    return;
+  }
+
+  for (const entry of entries) {
+    const option = document.createElement('option');
+    option.value = entry.path;
+    option.textContent = `${entry.label} · ${formatDate(entry.generatedAt)}`;
+    els.matrixCatalog.append(option);
+  }
+}
+
+async function loadCatalogMatrix(path) {
+  try {
+    const response = await fetch(path, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`Matrix snapshot failed to load: ${response.status}`);
+    const matrix = await response.json();
+    const label = catalogLabel(matrix, path);
+    setMatrix(matrix, label);
+  } catch (error) {
+    els.details.innerHTML = `<h2>Matrix could not be loaded</h2><p>${escapeHtml(error.message)}</p>`;
+  }
 }
 
 async function handleFileUpload(event) {
@@ -66,10 +118,17 @@ async function handleFileUpload(event) {
 
   try {
     const matrix = JSON.parse(await file.text());
+    els.matrixCatalog.value = '';
     setMatrix(matrix, file.name);
   } catch (error) {
     els.details.innerHTML = `<h2>Matrix could not be loaded</h2><p>${escapeHtml(error.message)}</p>`;
   }
+}
+
+function catalogLabel(matrix, path) {
+  const catalog = matrix.catalog;
+  if (!catalog) return path.split('/').at(-1) ?? 'Catalog matrix';
+  return `${catalog.branch ?? 'branch'} @ ${(catalog.sha ?? '').slice(0, 7) || 'unknown'}`;
 }
 
 function setMatrix(matrix, sourceLabel) {

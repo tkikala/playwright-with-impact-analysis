@@ -24,13 +24,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate matrix snapshot
+        run: |
+          rm -rf fixtures/demo-app/.playwright-impact
+          mkdir -p fixtures/demo-app/.playwright-impact/coverage
+          cp fixtures/demo-app/coverage-records/*.json fixtures/demo-app/.playwright-impact/coverage/
+          node src/cli.mjs record \
+            --cwd fixtures/demo-app \
+            --skip-tests \
+            --matrix-path .playwright-impact/matrix.json \
+            --coverage-dir .playwright-impact/coverage
+
+      - name: Build Pages catalog
+        run: node scripts/build-pages-catalog.mjs fixtures/demo-app/.playwright-impact/matrix.json
+
       - uses: actions/configure-pages@v5
         with:
           enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: docs
+          path: _site
 
       - id: deployment
         uses: actions/deploy-pages@v4
