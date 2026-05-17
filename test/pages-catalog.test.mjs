@@ -39,8 +39,8 @@ test('builds a Pages catalog from a generated matrix', async () => {
       GITHUB_RUN_ID: '42',
       GITHUB_RUN_NUMBER: '7',
       GITHUB_REF_NAME: 'main',
-      MATRIX_REPOSITORY: 'mxschmitt/playwright-test-coverage',
-      MATRIX_SOURCE_URL: 'https://github.com/mxschmitt/playwright-test-coverage',
+      MATRIX_REPOSITORY: 'sourcegraph/ecommerce-app',
+      MATRIX_SOURCE_URL: 'https://github.com/sourcegraph/ecommerce-app',
       MATRIX_BRANCH: 'main',
       MATRIX_SHA: 'abcdef1234567890',
       PAGES_BASE_URL: 'http://127.0.0.1:9/'
@@ -49,11 +49,11 @@ test('builds a Pages catalog from a generated matrix', async () => {
 
   const manifest = JSON.parse(await fs.readFile(path.join(repoRoot, '_site/data/manifest.json'), 'utf8'));
   assert.equal(manifest.entries.length, 1);
-  assert.equal(manifest.entries[0].label, 'mxschmitt/playwright-test-coverage @ abcdef1');
+  assert.equal(manifest.entries[0].label, 'sourcegraph/ecommerce-app @ abcdef1');
   assert.equal(manifest.latest, manifest.entries[0].path);
 
   const snapshot = JSON.parse(await fs.readFile(path.join(repoRoot, '_site', manifest.latest), 'utf8'));
   assert.equal(snapshot.catalog.runId, '42');
-  assert.equal(snapshot.catalog.repository, 'mxschmitt/playwright-test-coverage');
+  assert.equal(snapshot.catalog.repository, 'sourcegraph/ecommerce-app');
   assert.deepEqual(snapshot.sourceFiles, ['src/App.tsx']);
 });
