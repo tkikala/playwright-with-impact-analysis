@@ -128,7 +128,8 @@ async function handleFileUpload(event) {
 function catalogLabel(matrix, path) {
   const catalog = matrix.catalog;
   if (!catalog) return path.split('/').at(-1) ?? 'Catalog matrix';
-  return `${catalog.branch ?? 'branch'} @ ${(catalog.sha ?? '').slice(0, 7) || 'unknown'}`;
+  const repo = catalog.repository ?? 'repository';
+  return `${repo} @ ${(catalog.sha ?? '').slice(0, 7) || 'unknown'}`;
 }
 
 function setMatrix(matrix, sourceLabel) {

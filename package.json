@@ -9,7 +9,8 @@
   },
   "exports": {
     ".": "./src/index.mjs",
-    "./playwright": "./src/playwright/impact-fixture.mjs"
+    "./playwright": "./src/playwright/impact-fixture.mjs",
+    "./playwright/collector": "./src/playwright/coverage-collector.mjs"
   },
   "scripts": {
     "test": "node --test test/*.test.mjs",

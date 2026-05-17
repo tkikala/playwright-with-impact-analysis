@@ -8,7 +8,7 @@ The first MVP is intentionally frontend-only. Backend and cross-repo impact can 
 
 Visualize a matrix with the GitHub Pages app: https://tkikala.github.io/playwright-with-impact-analysis/
 
-The Pages deployment publishes a matrix catalog. Each Pages pipeline run generates a fresh matrix snapshot, preserves previously published snapshots, and writes `data/manifest.json` so the UI can open the latest matrix or choose an older run from the selector.
+The Pages deployment publishes a matrix catalog. Each Pages pipeline run clones `mxschmitt/playwright-test-coverage`, runs its real Playwright tests with this package's impact fixture, generates a fresh matrix snapshot, preserves previously published snapshots, and writes `data/manifest.json` so the UI can open the latest matrix or choose an older run from the selector.
 
 ## What It Does
 
@@ -64,6 +64,19 @@ import { test as base, expect } from '@playwright/test';
 import { attachImpactCoverage } from 'playwright-impact-analysis/playwright';
 
 export const test = attachImpactCoverage(base.extend({}));
+export { expect };
+```
+
+For repos that already own their Playwright `test` fixture, the lower-level collector is also exported:
+
+```js
+import { test as base, expect } from '@playwright/test';
+import { collectImpactCoverage } from 'playwright-impact-analysis/playwright/collector';
+
+export const test = base.extend({});
+test.afterEach(async ({ page }, testInfo) => {
+  await collectImpactCoverage({ page, testInfo });
+});
 export { expect };
 ```
 

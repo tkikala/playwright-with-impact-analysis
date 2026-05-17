@@ -15,6 +15,11 @@ const shortSha = sha.slice(0, 7);
 const runId = process.env.GITHUB_RUN_ID ?? 'local';
 const runNumber = process.env.GITHUB_RUN_NUMBER ?? 'local';
 const branch = process.env.GITHUB_REF_NAME ?? await readGitBranch();
+const matrixRepository = process.env.MATRIX_REPOSITORY ?? repository;
+const matrixSourceUrl = process.env.MATRIX_SOURCE_URL ?? `https://github.com/${matrixRepository}`;
+const matrixSha = process.env.MATRIX_SHA ?? sha;
+const matrixShortSha = matrixSha.slice(0, 7);
+const matrixBranch = process.env.MATRIX_BRANCH ?? branch;
 const generatedAt = new Date().toISOString();
 
 await fs.rm(siteDir, { recursive: true, force: true });
@@ -31,24 +36,31 @@ const matrix = JSON.parse(await fs.readFile(matrixPath, 'utf8'));
 matrix.catalog = {
   generatedAt,
   source: 'github-actions',
-  repository,
-  branch,
-  sha,
+  repository: matrixRepository,
+  sourceUrl: matrixSourceUrl,
+  branch: matrixBranch,
+  sha: matrixSha,
+  publisherRepository: repository,
+  publisherSha: sha,
   runId,
   runNumber
 };
 
-const snapshotName = `${generatedAt.replace(/[:.]/g, '-')}-${shortSha}.json`;
+const safeRepo = matrixRepository.replace(/[^a-zA-Z0-9._-]+/g, '-');
+const snapshotName = `${generatedAt.replace(/[:.]/g, '-')}-${safeRepo}-${matrixShortSha}.json`;
 await fs.writeFile(path.join(matrixDir, snapshotName), `${JSON.stringify(matrix, null, 2)}\n`);
 
 const entry = {
-  id: `${runId}-${shortSha}`,
-  label: `${branch} @ ${shortSha}`,
+  id: `${runId}-${matrixShortSha}`,
+  label: `${matrixRepository} @ ${matrixShortSha}`,
   path: `data/matrices/${snapshotName}`,
   generatedAt,
-  repository,
-  branch,
-  sha,
+  repository: matrixRepository,
+  sourceUrl: matrixSourceUrl,
+  branch: matrixBranch,
+  sha: matrixSha,
+  publisherRepository: repository,
+  publisherSha: sha,
   runId,
   runNumber,
   coveredFiles: Object.keys(matrix.files ?? {}).length,

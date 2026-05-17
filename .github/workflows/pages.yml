@@ -28,19 +28,35 @@ jobs:
         with:
           node-version: 20
 
-      - name: Generate matrix snapshot
+      - name: Checkout real SUT
+        run: git clone --depth=1 https://github.com/mxschmitt/playwright-test-coverage.git _sut/playwright-test-coverage
+
+      - name: Prepare real SUT
+        working-directory: _sut/playwright-test-coverage
         run: |
-          rm -rf fixtures/demo-app/.playwright-impact
-          mkdir -p fixtures/demo-app/.playwright-impact/coverage
-          cp fixtures/demo-app/coverage-records/*.json fixtures/demo-app/.playwright-impact/coverage/
-          node src/cli.mjs record \
-            --cwd fixtures/demo-app \
-            --skip-tests \
+          npm ci
+          npm install "$GITHUB_WORKSPACE"
+          node -e "require('node:fs').writeFileSync('e2e/baseFixtures.ts', \"import { test as base, expect } from '@playwright/test';\\nimport { collectImpactCoverage } from 'playwright-impact-analysis/playwright/collector';\\nexport const test = base.extend({});\\ntest.afterEach(async ({ page }, testInfo) => {\\n  await collectImpactCoverage({ page, testInfo });\\n});\\nexport { expect };\\n\")"
+          npx playwright install --with-deps chromium
+
+      - name: Capture SUT metadata
+        run: |
+          echo "MATRIX_REPOSITORY=mxschmitt/playwright-test-coverage" >> "$GITHUB_ENV"
+          echo "MATRIX_SOURCE_URL=https://github.com/mxschmitt/playwright-test-coverage" >> "$GITHUB_ENV"
+          echo "MATRIX_BRANCH=$(git -C _sut/playwright-test-coverage branch --show-current)" >> "$GITHUB_ENV"
+          echo "MATRIX_SHA=$(git -C _sut/playwright-test-coverage rev-parse HEAD)" >> "$GITHUB_ENV"
+
+      - name: Generate real SUT matrix snapshot
+        working-directory: _sut/playwright-test-coverage
+        run: |
+          node "$GITHUB_WORKSPACE/src/cli.mjs" record \
             --matrix-path .playwright-impact/matrix.json \
-            --coverage-dir .playwright-impact/coverage
+            --coverage-dir .playwright-impact/coverage \
+            --source-roots src \
+            --test-command "npm test"
 
       - name: Build Pages catalog
-        run: node scripts/build-pages-catalog.mjs fixtures/demo-app/.playwright-impact/matrix.json
+        run: node scripts/build-pages-catalog.mjs _sut/playwright-test-coverage/.playwright-impact/matrix.json
 
       - uses: actions/configure-pages@v5
         with:
