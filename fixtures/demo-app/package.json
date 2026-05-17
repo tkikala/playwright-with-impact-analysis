@@ -1,0 +1,8 @@
+{
+  "name": "playwright-impact-demo-app",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:e2e": "playwright test"
+  }
+}

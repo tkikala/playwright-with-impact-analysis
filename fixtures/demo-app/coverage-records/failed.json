@@ -1,0 +1,9 @@
+{
+  "spec": "tests/failing.spec.ts",
+  "title": "does not enter matrix",
+  "project": "chromium",
+  "status": "failed",
+  "files": [
+    "src/Failed.tsx"
+  ]
+}

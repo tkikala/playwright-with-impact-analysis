@@ -1,0 +1,9 @@
+{
+  "spec": "tests/app.spec.ts",
+  "title": "renders app",
+  "project": "chromium",
+  "status": "passed",
+  "files": [
+    "src/App.tsx"
+  ]
+}

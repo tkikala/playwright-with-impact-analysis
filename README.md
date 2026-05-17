@@ -111,6 +111,20 @@ pw-impact select --changed-files "src/pages/Dashboard.tsx"
 pw-impact run --base-ref origin/main --test-command "npx playwright test"
 ```
 
+## Testing This Package
+
+Run the deterministic unit and integration suite:
+
+```bash
+npm test
+```
+
+The integration test uses `fixtures/demo-app` with pre-seeded coverage records to exercise the product loop without external services:
+
+1. build a matrix from per-test coverage records
+2. select impacted specs for changed files
+3. verify safe fallbacks for global and unknown source changes
+
 ## Matrix Format
 
 ```json

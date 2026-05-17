@@ -61,8 +61,10 @@ async function main() {
 
   if (command === 'record') {
     process.env.PW_IMPACT_COVERAGE_DIR = coverageDir;
-    await fs.rm(path.resolve(repoRoot, coverageDir), { recursive: true, force: true });
-    if (args['skip-tests'] !== true) await run(testCommand, { cwd: repoRoot });
+    if (args['skip-tests'] !== true) {
+      await fs.rm(path.resolve(repoRoot, coverageDir), { recursive: true, force: true });
+      await run(testCommand, { cwd: repoRoot });
+    }
     const matrix = await buildMatrixFromCoverageDir({
       repoRoot,
       coverageDir,

@@ -1,0 +1,9 @@
+{
+  "spec": "tests/button.spec.ts",
+  "title": "renders button",
+  "project": "chromium",
+  "status": "passed",
+  "files": [
+    "src/Button.tsx"
+  ]
+}
