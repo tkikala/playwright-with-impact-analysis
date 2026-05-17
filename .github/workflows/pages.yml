@@ -64,6 +64,7 @@ jobs:
             --matrix-path .playwright-impact/matrix.json \
             --coverage-dir .playwright-impact/coverage \
             --source-roots src \
+            --playwright-json-report test-results.json \
             --test-command "CI= VITE_COVERAGE=true npm run test:e2e"
 
       - name: Assert real SUT matrix is populated

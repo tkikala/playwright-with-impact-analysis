@@ -5,6 +5,7 @@ import { buildMatrixFromCoverageDir, readMatrix, writeMatrix } from './core/matr
 import { appendSpecsToCommand, selectImpactedSpecs } from './core/select.mjs';
 import { getChangedFiles, getHeadCommit } from './core/git.mjs';
 import { run } from './core/exec.mjs';
+import { addTestsFromPlaywrightJsonReport } from './core/playwright-report.mjs';
 
 function parseArgs(argv) {
   const args = { _: [] };
@@ -41,6 +42,8 @@ Options:
   --base-ref          Default: origin/main
   --changed-files     Comma or newline separated changed files
   --source-roots      Comma or newline separated source roots. Default: src
+  --playwright-json-report
+                      Optional Playwright JSON report to include all executed tests
   --fallback          full or none. Default: full
   --test-command      Default: npx playwright test
 `);
@@ -73,6 +76,7 @@ async function main() {
       baseCommit: await getHeadCommit(repoRoot),
       sourceRoots
     });
+    await addTestsFromPlaywrightJsonReport(matrix, args['playwright-json-report'], repoRoot);
     await writeMatrix(matrix, matrixPath, repoRoot);
     console.log(`Recorded ${matrix.testCount} tests across ${matrix.fileCount} files.`);
     return;
