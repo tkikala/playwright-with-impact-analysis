@@ -39,6 +39,10 @@
           <small>Playwright tests</small>
         </div>
         <div>
+          <span id="noLinkTestCount">0</span>
+          <small>Tests without links</small>
+        </div>
+        <div>
           <span id="edgeCount">0</span>
           <small>Coverage links</small>
         </div>
@@ -74,6 +78,11 @@
         </select>
       </section>
 
+      <section class="view-tabs" aria-label="Visualization mode">
+        <button id="mapView" class="tab active" type="button">Map</button>
+        <button id="circleView" class="tab" type="button">Circle graph</button>
+      </section>
+
       <section class="workspace" aria-label="Impact visualization">
         <div class="lane">
           <div class="lane-heading">
@@ -94,6 +103,14 @@
           </div>
           <div id="testMap" class="node-list" aria-label="Playwright specs"></div>
         </div>
+      </section>
+
+      <section id="circleGraphPanel" class="circle-panel" aria-label="Circular impact graph" hidden>
+        <div class="circle-heading">
+          <h2>SUT and Playwright graph</h2>
+          <span id="circleGraphStats">0 nodes</span>
+        </div>
+        <svg id="circleGraph" class="circle-graph" role="img" aria-label="Circular graph of SUT files and Playwright tests"></svg>
       </section>
 
       <aside id="details" class="details" aria-live="polite"></aside>

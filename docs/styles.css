@@ -12,6 +12,7 @@
   --rose: #b42345;
   --rose-soft: #ffe6eb;
   --blue: #2f6fbb;
+  --violet: #6a56c9;
   --shadow: 0 18px 45px rgba(24, 32, 38, 0.09);
 }
 
@@ -111,7 +112,7 @@ button {
 
 .summary {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 14px;
 }
@@ -207,6 +208,32 @@ button {
   color: var(--ink);
 }
 
+.view-tabs {
+  display: inline-flex;
+  gap: 6px;
+  margin-bottom: 14px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.tab {
+  min-height: 34px;
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 12px;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+.tab.active {
+  background: var(--ink);
+  color: #ffffff;
+}
+
 .workspace {
   display: grid;
   grid-template-columns: minmax(340px, 1fr) 190px minmax(340px, 1fr);
@@ -290,6 +317,16 @@ button {
   color: var(--rose);
 }
 
+.node.no-links {
+  border-color: rgba(178, 105, 0, 0.45);
+  background: #fffaf0;
+}
+
+.node.no-links .count {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
 .node.dimmed {
   opacity: 0.38;
 }
@@ -354,6 +391,110 @@ button {
   stroke-width: 2.6;
 }
 
+.circle-panel {
+  min-height: 720px;
+  margin-bottom: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.circle-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 54px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.circle-heading span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.circle-graph {
+  display: block;
+  width: 100%;
+  height: 666px;
+  background: #fbfcfd;
+}
+
+.circle-link {
+  fill: none;
+  stroke: rgba(20, 125, 116, 0.16);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+
+.circle-link.active {
+  stroke: var(--rose);
+  stroke-width: 2.6;
+}
+
+.circle-node {
+  cursor: pointer;
+}
+
+.circle-node circle {
+  stroke: #ffffff;
+  stroke-width: 2;
+}
+
+.circle-node.file circle {
+  fill: var(--teal);
+}
+
+.circle-node.file.uncovered circle {
+  fill: var(--rose);
+}
+
+.circle-node.test circle {
+  fill: var(--blue);
+}
+
+.circle-node.test.no-links circle {
+  fill: var(--amber);
+}
+
+.circle-node.active circle {
+  stroke: var(--ink);
+  stroke-width: 4;
+}
+
+.circle-node.related circle {
+  stroke: var(--amber);
+  stroke-width: 4;
+}
+
+.circle-node.dimmed,
+.circle-link.dimmed,
+.circle-label.dimmed {
+  opacity: 0.18;
+}
+
+.circle-label {
+  fill: var(--ink);
+  font-size: 11px;
+  font-weight: 800;
+  pointer-events: none;
+}
+
+.circle-label.muted {
+  fill: var(--muted);
+}
+
+.circle-empty {
+  fill: var(--muted);
+  font-size: 14px;
+  font-weight: 800;
+  text-anchor: middle;
+}
+
 .details {
   margin-top: 14px;
   padding: 16px;
@@ -413,6 +554,14 @@ button {
   .toolbar,
   .workspace {
     grid-template-columns: 1fr;
+  }
+
+  .circle-panel {
+    min-height: 560px;
+  }
+
+  .circle-graph {
+    height: 520px;
   }
 
   .graph-wrap {

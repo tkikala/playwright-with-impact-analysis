@@ -7,7 +7,8 @@ const state = {
   query: '',
   group: '',
   density: 'all',
-  coverage: 'all'
+  coverage: 'all',
+  view: 'map'
 };
 
 const els = {
@@ -22,6 +23,7 @@ const els = {
   edgeLayer: document.querySelector('#edgeLayer'),
   fileCount: document.querySelector('#fileCount'),
   testCount: document.querySelector('#testCount'),
+  noLinkTestCount: document.querySelector('#noLinkTestCount'),
   edgeCount: document.querySelector('#edgeCount'),
   uncoveredCount: document.querySelector('#uncoveredCount'),
   coverageRate: document.querySelector('#coverageRate'),
@@ -30,7 +32,13 @@ const els = {
   visibleFileCount: document.querySelector('#visibleFileCount'),
   visibleTestCount: document.querySelector('#visibleTestCount'),
   details: document.querySelector('#details'),
-  coverageFilter: document.querySelector('#coverageFilter')
+  coverageFilter: document.querySelector('#coverageFilter'),
+  mapView: document.querySelector('#mapView'),
+  circleView: document.querySelector('#circleView'),
+  workspace: document.querySelector('.workspace'),
+  circleGraphPanel: document.querySelector('#circleGraphPanel'),
+  circleGraph: document.querySelector('#circleGraph'),
+  circleGraphStats: document.querySelector('#circleGraphStats')
 };
 
 els.matrixCatalog.addEventListener('change', () => {
@@ -54,7 +62,9 @@ els.coverageFilter.addEventListener('change', () => {
   state.coverage = els.coverageFilter.value;
   render();
 });
-window.addEventListener('resize', () => requestAnimationFrame(renderEdges));
+els.mapView.addEventListener('click', () => setView('map'));
+els.circleView.addEventListener('click', () => setView('circle'));
+window.addEventListener('resize', () => requestAnimationFrame(renderActiveGraph));
 
 loadCatalog();
 
@@ -148,6 +158,15 @@ function setMatrix(matrix, sourceLabel) {
   render();
 }
 
+function setView(view) {
+  state.view = view;
+  els.mapView.classList.toggle('active', view === 'map');
+  els.circleView.classList.toggle('active', view === 'circle');
+  els.workspace.hidden = view !== 'map';
+  els.circleGraphPanel.hidden = view !== 'circle';
+  requestAnimationFrame(renderActiveGraph);
+}
+
 function normalizeMatrix(matrix) {
   const testsById = matrix.tests ?? {};
   const filesByPath = matrix.files ?? {};
@@ -196,6 +215,7 @@ function renderSummary(sourceLabel) {
   els.fileCount.textContent = coveredFiles;
   els.uncoveredCount.textContent = uncoveredFiles;
   els.testCount.textContent = state.tests.length;
+  els.noLinkTestCount.textContent = state.tests.filter((test) => test.files.length === 0).length;
   els.edgeCount.textContent = state.links.length;
   els.coverageRate.textContent = `${coverageRate}%`;
   els.coverageMeter.style.width = `${coverageRate}%`;
@@ -226,7 +246,7 @@ function render() {
   renderFiles(visibleFiles);
   renderTests(visibleTests);
   renderDetails();
-  requestAnimationFrame(renderEdges);
+  requestAnimationFrame(renderActiveGraph);
 }
 
 function filteredFiles() {
@@ -321,6 +341,10 @@ function nodeClass(type, id) {
     const file = state.files.find((item) => item.id === id);
     if (file && !file.covered) classes.push('uncovered');
   }
+  if (type === 'test') {
+    const test = state.tests.find((item) => item.id === id);
+    if (test && test.files.length === 0) classes.push('no-links');
+  }
   if (state.selected?.type === type && state.selected.id === id) classes.push('active');
   if (state.selected && isRelated(type, id)) classes.push('related');
   if (state.selected && !isRelated(type, id) && !(state.selected.type === type && state.selected.id === id)) {
@@ -350,6 +374,8 @@ function isRelated(type, id) {
 }
 
 function renderEdges() {
+  if (state.view !== 'map') return;
+
   const fileNodes = new Map([...document.querySelectorAll('[data-node-type="file"]')]
     .map((node) => [node.dataset.id, node]));
   const testNodes = new Map([...document.querySelectorAll('[data-node-type="test"]')]
@@ -383,6 +409,99 @@ function renderEdges() {
   }
 }
 
+function renderActiveGraph() {
+  if (state.view === 'circle') {
+    renderCircleGraph();
+  } else {
+    renderEdges();
+  }
+}
+
+function renderCircleGraph() {
+  const svg = els.circleGraph;
+  const box = svg.getBoundingClientRect();
+  const width = Math.max(box.width, 720);
+  const height = Math.max(box.height, 520);
+  const cx = width / 2;
+  const cy = height / 2;
+  const radius = Math.min(width, height) * 0.42;
+  const innerRadius = radius * 0.55;
+  const files = filteredFiles();
+  const fileIds = new Set(files.map((file) => file.id));
+  const tests = filteredTests().filter((test) => {
+    if (!state.group && state.coverage === 'all') return true;
+    return test.files.some((file) => fileIds.has(file)) || matchesQuery(test);
+  });
+  const testIds = new Set(tests.map((test) => test.id));
+  const links = state.links.filter((link) => fileIds.has(link.fileId) && testIds.has(link.testId));
+  const filePositions = radialPositions(files, cx, cy, radius, -120, 120);
+  const testPositions = radialPositions(tests, cx, cy, innerRadius, 120, 360);
+
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.innerHTML = '';
+  els.circleGraphStats.textContent = `${files.length + tests.length} nodes · ${links.length} links`;
+
+  if (!files.length && !tests.length) {
+    const empty = createSvg('text', {
+      class: 'circle-empty',
+      x: cx,
+      y: cy
+    });
+    empty.textContent = 'No matching graph nodes';
+    svg.append(empty);
+    return;
+  }
+
+  const linkLayer = createSvg('g');
+  const nodeLayer = createSvg('g');
+  const labelLayer = createSvg('g');
+  svg.append(linkLayer, nodeLayer, labelLayer);
+
+  for (const link of links) {
+    const filePosition = filePositions.get(link.fileId);
+    const testPosition = testPositions.get(link.testId);
+    if (!filePosition || !testPosition) continue;
+    const active = isLinkActive(link);
+    const path = createSvg('path', {
+      class: circleClass('circle-link', link.fileId, link.testId, active),
+      d: curvedRadialPath(filePosition, testPosition, cx, cy)
+    });
+    linkLayer.append(path);
+  }
+
+  for (const file of files) {
+    const position = filePositions.get(file.id);
+    const node = createCircleNode({
+      type: 'file',
+      id: file.id,
+      label: file.path,
+      position,
+      radius: nodeRadius(file.tests.length),
+      className: circleNodeClass('file', file.id)
+    });
+    nodeLayer.append(node);
+    if (shouldLabelNode(file, position.index, files.length)) {
+      labelLayer.append(createCircleLabel(file.name, file.id, position, cx, 'file', file.covered));
+    }
+  }
+
+  for (const test of tests) {
+    const position = testPositions.get(test.id);
+    const node = createCircleNode({
+      type: 'test',
+      id: test.id,
+      label: `${test.spec}: ${test.title}`,
+      position,
+      radius: nodeRadius(test.files.length),
+      className: circleNodeClass('test', test.id)
+    });
+    nodeLayer.append(node);
+    if (shouldLabelNode(test, position.index, tests.length)) {
+      labelLayer.append(createCircleLabel(test.title, test.id, position, cx, 'test', test.files.length > 0));
+    }
+  }
+}
+
 function renderDetails() {
   if (!state.selected) {
     els.details.innerHTML = `
@@ -407,12 +526,145 @@ function renderDetails() {
   }
 
   const test = state.tests.find((item) => item.id === state.selected.id);
+  const noCoverageCopy = test.files.length === 0
+    ? 'The test ran, but the browser coverage collector did not observe any instrumented SUT file hits for it.'
+    : `${escapeHtml(test.spec)} covers ${test.files.length} SUT file${test.files.length === 1 ? '' : 's'}.`;
   els.details.innerHTML = `
     <small>Playwright test</small>
     <h2>${escapeHtml(test.title)}</h2>
-    <p>${escapeHtml(test.spec)} covers ${test.files.length} SUT file${test.files.length === 1 ? '' : 's'}.</p>
+    <p>${noCoverageCopy}</p>
     <div class="details-list">${test.files.map((file) => `<span class="pill">${escapeHtml(file)}</span>`).join('')}</div>
   `;
+}
+
+function radialPositions(items, cx, cy, radius, startDegrees, endDegrees) {
+  const positions = new Map();
+  const span = endDegrees - startDegrees;
+  const count = Math.max(items.length, 1);
+  items.forEach((item, index) => {
+    const ratio = count === 1 ? 0.5 : index / count;
+    const angle = degreesToRadians(startDegrees + span * ratio);
+    positions.set(item.id, {
+      index,
+      angle,
+      x: cx + Math.cos(angle) * radius,
+      y: cy + Math.sin(angle) * radius
+    });
+  });
+  return positions;
+}
+
+function createCircleNode({ type, id, label, position, radius, className }) {
+  const group = createSvg('g', {
+    class: className,
+    tabindex: '0',
+    role: 'button'
+  });
+  group.dataset.nodeType = type;
+  group.dataset.id = id;
+  group.append(createSvg('title', {}, label));
+  group.append(createSvg('circle', {
+    cx: position.x,
+    cy: position.y,
+    r: radius
+  }));
+  group.addEventListener('click', () => selectNode(type, id));
+  group.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      selectNode(type, id);
+    }
+  });
+  return group;
+}
+
+function createCircleLabel(label, id, position, cx, type, linked) {
+  const anchor = position.x < cx ? 'end' : 'start';
+  const xOffset = position.x < cx ? -10 : 10;
+  const text = createSvg('text', {
+    class: `circle-label ${type === 'test' || !linked ? 'muted' : ''} ${state.selected && !isRelated(type, id) && !(state.selected.type === type && state.selected.id === id) ? 'dimmed' : ''}`,
+    x: position.x + xOffset,
+    y: position.y + 4,
+    'text-anchor': anchor
+  });
+  text.textContent = trimMiddle(label, 28);
+  return text;
+}
+
+function circleClass(base, fileId, testId, active) {
+  const classes = [base];
+  if (active) classes.push('active');
+  if (state.selected && !active) classes.push('dimmed');
+  return classes.join(' ');
+}
+
+function circleNodeClass(type, id) {
+  const classes = ['circle-node', type];
+  if (type === 'file') {
+    const file = state.files.find((item) => item.id === id);
+    if (file && !file.covered) classes.push('uncovered');
+  }
+  if (type === 'test') {
+    const test = state.tests.find((item) => item.id === id);
+    if (test && test.files.length === 0) classes.push('no-links');
+  }
+  if (state.selected?.type === type && state.selected.id === id) classes.push('active');
+  if (state.selected && isRelated(type, id)) classes.push('related');
+  if (state.selected && !isRelated(type, id) && !(state.selected.type === type && state.selected.id === id)) {
+    classes.push('dimmed');
+  }
+  return classes.join(' ');
+}
+
+function isLinkActive(link) {
+  if (!state.selected) return false;
+  return state.selected.type === 'file'
+    ? link.fileId === state.selected.id
+    : link.testId === state.selected.id;
+}
+
+function curvedRadialPath(filePosition, testPosition, cx, cy) {
+  const c1x = (filePosition.x + cx) / 2;
+  const c1y = (filePosition.y + cy) / 2;
+  const c2x = (testPosition.x + cx) / 2;
+  const c2y = (testPosition.y + cy) / 2;
+  return `M ${filePosition.x} ${filePosition.y} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${testPosition.x} ${testPosition.y}`;
+}
+
+function nodeRadius(linkCount) {
+  return Math.min(11, 4.8 + Math.sqrt(Math.max(linkCount, 0)) * 1.2);
+}
+
+function shouldLabelNode(item, index, total) {
+  if (state.selected?.id === item.id) return true;
+  if (isRelated(item.files ? 'test' : 'file', item.id)) return true;
+  const stride = total > 80 ? 8 : total > 45 ? 5 : total > 28 ? 3 : 2;
+  return index % stride === 0;
+}
+
+function createSvg(tag, attributes = {}, text = '') {
+  const node = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [key, value] of Object.entries(attributes)) {
+    if (key === 'class') {
+      node.setAttribute('class', value);
+    } else {
+      node.setAttribute(key, value);
+    }
+  }
+  if (text) node.textContent = text;
+  return node;
+}
+
+function degreesToRadians(value) {
+  return (value * Math.PI) / 180;
+}
+
+function trimMiddle(value, maxLength) {
+  const text = String(value);
+  if (text.length <= maxLength) return text;
+  const head = Math.ceil((maxLength - 1) / 2);
+  const tail = Math.floor((maxLength - 1) / 2);
+  return `${text.slice(0, head)}…${text.slice(-tail)}`;
 }
 
 function groupBy(values, getKey) {
