@@ -3,13 +3,12 @@ import path from 'node:path';
 import { extractCoveredFiles, normalizeRepoPath } from '../core/coverage.mjs';
 
 export async function collectImpactCoverage({ page, testInfo, repoRoot = process.cwd() }) {
-  if (!page || page.isClosed()) return null;
+  if (!testInfo) return null;
 
-  const coverage = await page.evaluate(() => globalThis.__coverage__ ?? null).catch(() => null);
-  if (!coverage) return null;
-
-  const files = extractCoveredFiles(coverage, { repoRoot });
-  if (files.length === 0) return null;
+  const coverage = !page || page.isClosed()
+    ? null
+    : await page.evaluate(() => globalThis.__coverage__ ?? null).catch(() => null);
+  const files = coverage ? extractCoveredFiles(coverage, { repoRoot }) : [];
 
   const coverageDir = process.env.PW_IMPACT_COVERAGE_DIR ?? '.playwright-impact/coverage';
   const outputDir = path.resolve(repoRoot, coverageDir);

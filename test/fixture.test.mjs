@@ -63,7 +63,8 @@ test('collects a Playwright test coverage record from window coverage', async ()
   }
 });
 
-test('skips collection when coverage is missing', async () => {
+test('records test execution when coverage is missing', async () => {
+  const repoRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'pw-impact-no-coverage-'));
   const page = {
     isClosed: () => false,
     evaluate: async () => null
@@ -71,8 +72,13 @@ test('skips collection when coverage is missing', async () => {
 
   const record = await collectImpactCoverage({
     page,
-    testInfo: { file: 'tests/app.spec.ts', title: 'loads app' }
+    testInfo: { file: `${repoRoot}/tests/app.spec.ts`, title: 'loads app' },
+    repoRoot
   });
 
-  assert.equal(record, null);
+  assert.deepEqual(record.files, []);
+
+  const outputDir = path.join(repoRoot, '.playwright-impact/coverage');
+  const files = await fs.readdir(outputDir);
+  assert.equal(files.length, 1);
 });

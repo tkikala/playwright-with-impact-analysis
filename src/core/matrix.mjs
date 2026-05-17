@@ -68,8 +68,6 @@ export async function buildMatrixFromCoverageDir(options = {}) {
       .map((file) => normalizeRepoPath(file, repoRoot))
       .filter(Boolean));
 
-    if (files.length === 0) continue;
-
     const testId = makeTestId({ ...record, spec });
     matrix.tests[testId] = {
       spec,
