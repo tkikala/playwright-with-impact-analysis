@@ -1,0 +1,51 @@
+name: Action Self Test
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Build fixture matrix
+        run: |
+          mkdir -p fixtures/demo-app/.playwright-impact/coverage
+          cp fixtures/demo-app/coverage-records/*.json fixtures/demo-app/.playwright-impact/coverage/
+          node src/cli.mjs record \
+            --cwd fixtures/demo-app \
+            --skip-tests \
+            --matrix-path .playwright-impact/matrix.json \
+            --coverage-dir .playwright-impact/coverage
+
+      - name: Select impacted specs through local action
+        id: impact
+        uses: ./
+        with:
+          mode: select
+          working-directory: fixtures/demo-app
+          matrix-storage: file
+          matrix-path: .playwright-impact/matrix.json
+          changed-files: src/Button.tsx
+
+      - name: Assert action outputs
+        env:
+          DECISION: ${{ steps.impact.outputs.decision }}
+          SPECS: ${{ steps.impact.outputs.specs }}
+        run: |
+          test "$DECISION" = "selected"
+          printf '%s\n' "$SPECS" | grep -Fx "tests/button.spec.ts"

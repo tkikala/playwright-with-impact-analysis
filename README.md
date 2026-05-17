@@ -92,7 +92,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps
 
-      - uses: your-org/playwright-impact-analysis@v1
+      - uses: tkikala/playwright-with-impact-analysis@v0.1.0
         with:
           mode: auto
           test-command: npx playwright test
