@@ -18,6 +18,7 @@ async function main() {
   const dataBranch = getInput('data-branch', 'playwright-impact-data');
   const githubToken = getInput('github-token', process.env.GITHUB_TOKEN ?? '');
   const globalChangePatterns = getInput('global-change-patterns', '');
+  const sourceRoots = getInput('source-roots', 'src');
   const baseRef = getInput('base-ref', process.env.GITHUB_BASE_REF ? `origin/${process.env.GITHUB_BASE_REF}` : 'origin/main');
   const explicitChangedFiles = getInput('changed-files', '');
 
@@ -33,7 +34,8 @@ async function main() {
     const matrix = await buildMatrixFromCoverageDir({
       repoRoot,
       coverageDir,
-      baseCommit: await getHeadCommit(repoRoot)
+      baseCommit: await getHeadCommit(repoRoot),
+      sourceRoots
     });
     await saveMatrix(matrix, { repoRoot, matrixPath, storage, dataBranch, githubToken });
     setOutput('decision', 'record');

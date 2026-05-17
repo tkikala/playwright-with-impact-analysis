@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { normalizeRepoPath, toPosixPath } from './coverage.mjs';
+import { listSourceFiles } from './source-files.mjs';
 
 export const MATRIX_VERSION = 1;
 
@@ -48,6 +49,10 @@ export async function buildMatrixFromCoverageDir(options = {}) {
     version: MATRIX_VERSION,
     generatedAt: new Date().toISOString(),
     baseCommit: options.baseCommit ?? null,
+    sourceFiles: await listSourceFiles({
+      repoRoot,
+      sourceRoots: options.sourceRoots
+    }),
     files: {},
     tests: {}
   };
@@ -85,6 +90,10 @@ export async function buildMatrixFromCoverageDir(options = {}) {
 
   matrix.testCount = Object.keys(matrix.tests).length;
   matrix.fileCount = Object.keys(matrix.files).length;
+  matrix.sourceFileCount = matrix.sourceFiles.length;
+  matrix.uncoveredFileCount = matrix.sourceFiles
+    .filter((file) => !matrix.files[file]?.length)
+    .length;
   return matrix;
 }
 

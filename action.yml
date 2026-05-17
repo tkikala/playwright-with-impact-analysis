@@ -55,6 +55,10 @@ inputs:
     description: "Comma/newline separated paths that should force a full suite."
     required: false
     default: "package.json,package-lock.json,pnpm-lock.yaml,yarn.lock,bun.lockb,playwright.config.ts,playwright.config.js,vite.config.ts,vite.config.js,webpack.config.js,tsconfig.json"
+  source-roots:
+    description: "Comma/newline separated source roots to include in the visualization inventory."
+    required: false
+    default: "src"
 
 outputs:
   decision:

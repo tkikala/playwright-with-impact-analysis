@@ -25,7 +25,11 @@
       <section class="summary" aria-label="Matrix summary">
         <div>
           <span id="fileCount">0</span>
-          <small>SUT files</small>
+          <small>Covered SUT files</small>
+        </div>
+        <div>
+          <span id="uncoveredCount">0</span>
+          <small>Uncovered files</small>
         </div>
         <div>
           <span id="testCount">0</span>
@@ -41,6 +45,16 @@
         </div>
       </section>
 
+      <section class="coverage-panel" aria-label="Coverage overview">
+        <div class="meter-copy">
+          <strong id="coverageRate">0%</strong>
+          <span>SUT file coverage by Playwright impact matrix</span>
+        </div>
+        <div class="meter" aria-hidden="true">
+          <span id="coverageMeter"></span>
+        </div>
+      </section>
+
       <section class="toolbar" aria-label="Visualization controls">
         <input id="search" type="search" placeholder="Filter files or tests">
         <select id="groupFilter" aria-label="Filter by SUT group">
@@ -49,6 +63,11 @@
         <select id="density" aria-label="Map density">
           <option value="all">All links</option>
           <option value="selected">Selected only</option>
+        </select>
+        <select id="coverageFilter" aria-label="Filter by coverage">
+          <option value="all">All files</option>
+          <option value="covered">Covered only</option>
+          <option value="uncovered">Uncovered only</option>
         </select>
       </section>
 

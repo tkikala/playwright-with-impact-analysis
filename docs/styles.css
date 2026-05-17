@@ -10,6 +10,7 @@
   --amber: #b26900;
   --amber-soft: #fff2d8;
   --rose: #b42345;
+  --rose-soft: #ffe6eb;
   --blue: #2f6fbb;
   --shadow: 0 18px 45px rgba(24, 32, 38, 0.09);
 }
@@ -103,7 +104,7 @@ button {
 
 .summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 14px;
 }
@@ -138,10 +139,54 @@ button {
 
 .toolbar {
   display: grid;
-  grid-template-columns: 1fr 220px 180px;
+  grid-template-columns: 1fr 220px 180px 180px;
   gap: 10px;
   padding: 12px;
   margin-bottom: 14px;
+}
+
+.coverage-panel {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.meter-copy strong {
+  display: block;
+  font-size: 28px;
+  line-height: 1;
+}
+
+.meter-copy span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.meter {
+  height: 16px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--rose-soft);
+}
+
+.meter span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--teal), var(--blue));
+  transition: width 180ms ease;
 }
 
 .toolbar input,
@@ -228,6 +273,16 @@ button {
   background: var(--amber-soft);
 }
 
+.node.uncovered {
+  border-color: rgba(180, 35, 69, 0.38);
+  background: #fff8f9;
+}
+
+.node.uncovered .count {
+  background: var(--rose-soft);
+  color: var(--rose);
+}
+
 .node.dimmed {
   opacity: 0.38;
 }
@@ -279,11 +334,17 @@ button {
   fill: none;
   stroke: rgba(20, 125, 116, 0.3);
   stroke-width: 1.8;
+  vector-effect: non-scaling-stroke;
 }
 
 .edge.active {
   stroke: var(--rose);
   stroke-width: 3;
+}
+
+.edge.high {
+  stroke: rgba(47, 111, 187, 0.44);
+  stroke-width: 2.6;
 }
 
 .details {
@@ -341,6 +402,7 @@ button {
   }
 
   .summary,
+  .coverage-panel,
   .toolbar,
   .workspace {
     grid-template-columns: 1fr;

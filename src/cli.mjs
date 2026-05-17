@@ -40,6 +40,7 @@ Options:
   --coverage-dir      Default: .playwright-impact/coverage
   --base-ref          Default: origin/main
   --changed-files     Comma or newline separated changed files
+  --source-roots      Comma or newline separated source roots. Default: src
   --fallback          full or none. Default: full
   --test-command      Default: npx playwright test
 `);
@@ -58,6 +59,7 @@ async function main() {
   const coverageDir = args['coverage-dir'] ?? '.playwright-impact/coverage';
   const testCommand = args['test-command'] ?? 'npx playwright test';
   const fallback = args.fallback ?? 'full';
+  const sourceRoots = args['source-roots'] ?? 'src';
 
   if (command === 'record') {
     process.env.PW_IMPACT_COVERAGE_DIR = coverageDir;
@@ -68,7 +70,8 @@ async function main() {
     const matrix = await buildMatrixFromCoverageDir({
       repoRoot,
       coverageDir,
-      baseCommit: await getHeadCommit(repoRoot)
+      baseCommit: await getHeadCommit(repoRoot),
+      sourceRoots
     });
     await writeMatrix(matrix, matrixPath, repoRoot);
     console.log(`Recorded ${matrix.testCount} tests across ${matrix.fileCount} files.`);

@@ -6,7 +6,8 @@ const state = {
   selected: null,
   query: '',
   group: '',
-  density: 'all'
+  density: 'all',
+  coverage: 'all'
 };
 
 const els = {
@@ -21,10 +22,14 @@ const els = {
   fileCount: document.querySelector('#fileCount'),
   testCount: document.querySelector('#testCount'),
   edgeCount: document.querySelector('#edgeCount'),
+  uncoveredCount: document.querySelector('#uncoveredCount'),
+  coverageRate: document.querySelector('#coverageRate'),
+  coverageMeter: document.querySelector('#coverageMeter'),
   generatedAt: document.querySelector('#generatedAt'),
   visibleFileCount: document.querySelector('#visibleFileCount'),
   visibleTestCount: document.querySelector('#visibleTestCount'),
-  details: document.querySelector('#details')
+  details: document.querySelector('#details'),
+  coverageFilter: document.querySelector('#coverageFilter')
 };
 
 els.matrixFile.addEventListener('change', handleFileUpload);
@@ -40,6 +45,10 @@ els.groupFilter.addEventListener('change', () => {
 els.density.addEventListener('change', () => {
   state.density = els.density.value;
   renderEdges();
+});
+els.coverageFilter.addEventListener('change', () => {
+  state.coverage = els.coverageFilter.value;
+  render();
 });
 window.addEventListener('resize', () => requestAnimationFrame(renderEdges));
 
@@ -82,14 +91,18 @@ function setMatrix(matrix, sourceLabel) {
 function normalizeMatrix(matrix) {
   const testsById = matrix.tests ?? {};
   const filesByPath = matrix.files ?? {};
+  const inventory = matrix.sourceFiles?.length
+    ? matrix.sourceFiles
+    : Object.keys(filesByPath);
 
-  const files = Object.entries(filesByPath)
-    .map(([path, testIds]) => ({
+  const files = [...new Set([...inventory, ...Object.keys(filesByPath)])]
+    .map((path) => ({
       id: path,
       path,
       name: basename(path),
       group: groupName(path),
-      tests: [...new Set(testIds ?? [])].filter((id) => testsById[id])
+      tests: [...new Set(filesByPath[path] ?? [])].filter((id) => testsById[id]),
+      covered: Boolean(filesByPath[path]?.length)
     }))
     .sort((a, b) => a.path.localeCompare(b.path));
 
@@ -114,9 +127,18 @@ function normalizeMatrix(matrix) {
 }
 
 function renderSummary(sourceLabel) {
-  els.fileCount.textContent = state.files.length;
+  const coveredFiles = state.files.filter((file) => file.covered).length;
+  const uncoveredFiles = state.files.length - coveredFiles;
+  const coverageRate = state.files.length
+    ? Math.round((coveredFiles / state.files.length) * 100)
+    : 0;
+
+  els.fileCount.textContent = coveredFiles;
+  els.uncoveredCount.textContent = uncoveredFiles;
   els.testCount.textContent = state.tests.length;
   els.edgeCount.textContent = state.links.length;
+  els.coverageRate.textContent = `${coverageRate}%`;
+  els.coverageMeter.style.width = `${coverageRate}%`;
   els.generatedAt.textContent = sourceLabel || formatDate(state.matrix.generatedAt);
 }
 
@@ -135,7 +157,7 @@ function render() {
   const visibleFiles = filteredFiles();
   const visibleTestIds = new Set(visibleFiles.flatMap((file) => file.tests));
   const visibleTests = filteredTests().filter((test) => {
-    if (!state.query && !state.group) return true;
+    if (!state.query && !state.group && state.coverage === 'all') return true;
     return visibleTestIds.has(test.id) || matchesQuery(test);
   });
 
@@ -150,6 +172,8 @@ function render() {
 function filteredFiles() {
   return state.files.filter((file) => {
     if (state.group && file.group !== state.group) return false;
+    if (state.coverage === 'covered' && !file.covered) return false;
+    if (state.coverage === 'uncovered' && file.covered) return false;
     if (!state.query) return true;
     return file.path.toLowerCase().includes(state.query)
       || file.tests.some((id) => {
@@ -208,7 +232,7 @@ function createFileNode(file) {
       <strong>${escapeHtml(file.name)}</strong>
       <span>${escapeHtml(file.path)}</span>
     </span>
-    <span class="count">${file.tests.length}</span>
+    <span class="count">${file.covered ? file.tests.length : '0'}</span>
   `;
   button.addEventListener('click', () => selectNode('file', file.id));
   return button;
@@ -233,6 +257,10 @@ function createTestNode(test) {
 
 function nodeClass(type, id) {
   const classes = ['node'];
+  if (type === 'file') {
+    const file = state.files.find((item) => item.id === id);
+    if (file && !file.covered) classes.push('uncovered');
+  }
   if (state.selected?.type === type && state.selected.id === id) classes.push('active');
   if (state.selected && isRelated(type, id)) classes.push('related');
   if (state.selected && !isRelated(type, id) && !(state.selected.type === type && state.selected.id === id)) {
@@ -289,6 +317,7 @@ function renderEdges() {
     const curve = Math.max(40, graphBox.width * 0.42);
     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     path.setAttribute('class', state.selected ? 'edge active' : 'edge');
+    if (!state.selected && linkWeight(link) > 1) path.classList.add('high');
     path.setAttribute('d', `M ${x1} ${y1} C ${curve} ${y1}, ${x2 - curve} ${y2}, ${x2} ${y2}`);
     els.edgeLayer.append(path);
   }
@@ -309,7 +338,9 @@ function renderDetails() {
     els.details.innerHTML = `
       <small>SUT file</small>
       <h2>${escapeHtml(file.path)}</h2>
-      <p>${tests.length} Playwright test${tests.length === 1 ? '' : 's'} cover this file.</p>
+      <p>${tests.length
+        ? `${tests.length} Playwright test${tests.length === 1 ? '' : 's'} cover this file.`
+        : 'No Playwright tests covered this file in the recorded matrix.'}</p>
       <div class="details-list">${tests.map((test) => `<span class="pill">${escapeHtml(test.spec)}: ${escapeHtml(test.title)}</span>`).join('')}</div>
     `;
     return;
@@ -339,6 +370,12 @@ function matchesQuery(test) {
   return test.spec.toLowerCase().includes(query)
     || test.title.toLowerCase().includes(query)
     || test.files.some((file) => file.toLowerCase().includes(query));
+}
+
+function linkWeight(link) {
+  const file = state.files.find((item) => item.id === link.fileId);
+  const test = state.tests.find((item) => item.id === link.testId);
+  return Math.max(file?.tests.length ?? 1, test?.files.length ?? 1);
 }
 
 function basename(value) {

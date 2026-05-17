@@ -2,6 +2,16 @@
   "version": 1,
   "generatedAt": "2026-05-17T12:00:00.000Z",
   "baseCommit": "demo",
+  "sourceFiles": [
+    "src/App.tsx",
+    "src/components/Button.tsx",
+    "src/components/UserMenu.tsx",
+    "src/components/EmptyState.tsx",
+    "src/lib/api.ts",
+    "src/lib/formatCurrency.ts",
+    "src/pages/Dashboard.tsx",
+    "src/pages/Settings.tsx"
+  ],
   "files": {
     "src/App.tsx": [
       "tests/app.spec.ts::chromium::renders app",
@@ -83,5 +93,7 @@
     }
   },
   "testCount": 6,
-  "fileCount": 6
+  "fileCount": 6,
+  "sourceFileCount": 8,
+  "uncoveredFileCount": 2
 }

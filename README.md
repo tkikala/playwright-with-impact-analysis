@@ -113,6 +113,12 @@ pw-impact select --changed-files "src/pages/Dashboard.tsx"
 pw-impact run --base-ref origin/main --test-command "npx playwright test"
 ```
 
+`record` also scans source files under `src` by default and stores them in `sourceFiles`, so the visualization can show files with no Playwright coverage. For apps with multiple source roots:
+
+```bash
+pw-impact record --source-roots "app,components,lib" --test-command "npx playwright test"
+```
+
 ## Testing This Package
 
 Run the deterministic unit and integration suite:
@@ -134,6 +140,10 @@ The integration test uses `fixtures/demo-app` with pre-seeded coverage records t
   "version": 1,
   "generatedAt": "2026-05-16T12:00:00.000Z",
   "baseCommit": "abc123",
+  "sourceFiles": [
+    "src/pages/Dashboard.tsx",
+    "src/pages/Uncovered.tsx"
+  ],
   "files": {
     "src/pages/Dashboard.tsx": [
       "tests/dashboard.spec.ts::chromium::dashboard loads"
