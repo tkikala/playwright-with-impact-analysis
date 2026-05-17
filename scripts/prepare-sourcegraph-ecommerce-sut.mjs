@@ -48,7 +48,6 @@ viteConfig = viteConfig.replace(
       exclude: ['node_modules', 'e2e'],
       extension: ['.js', '.jsx', '.ts', '.tsx'],
       requireEnv: true,
-      env: 'PW_IMPACT_COVERAGE',
     }),
   ],`
 );

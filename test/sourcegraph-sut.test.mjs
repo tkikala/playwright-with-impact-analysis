@@ -28,5 +28,5 @@ test('patches a Sourcegraph ecommerce SUT checkout for impact recording', async 
   assert.match(spec, /from '\.\/impactFixture'/);
   assert.match(fixture, /collectImpactCoverage/);
   assert.match(viteConfig, /vite-plugin-istanbul/);
-  assert.match(viteConfig, /PW_IMPACT_COVERAGE/);
+  assert.match(viteConfig, /requireEnv: true/);
 });

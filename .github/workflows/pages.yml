@@ -64,11 +64,20 @@ jobs:
             --matrix-path .playwright-impact/matrix.json \
             --coverage-dir .playwright-impact/coverage \
             --source-roots src \
-            --test-command "CI= PW_IMPACT_COVERAGE=1 npm run test:e2e"
+            --test-command "CI= VITE_COVERAGE=true npm run test:e2e"
 
       - name: Assert real SUT matrix is populated
         run: |
-          node -e "const fs = require('node:fs'); const matrix = JSON.parse(fs.readFileSync('_sut/ecommerce-app/frontend/.playwright-impact/matrix.json', 'utf8')); if (!matrix.testCount || !matrix.fileCount) { throw new Error(`Expected populated impact matrix, got ${matrix.testCount || 0} tests and ${matrix.fileCount || 0} files`); } console.log(`Matrix contains ${matrix.testCount} tests across ${matrix.fileCount} covered files out of ${matrix.sourceFileCount} source files.`)"
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+
+          const matrix = JSON.parse(fs.readFileSync('_sut/ecommerce-app/frontend/.playwright-impact/matrix.json', 'utf8'));
+          if (!matrix.testCount || !matrix.fileCount) {
+            throw new Error(`Expected populated impact matrix, got ${matrix.testCount || 0} tests and ${matrix.fileCount || 0} files`);
+          }
+
+          console.log(`Matrix contains ${matrix.testCount} tests across ${matrix.fileCount} covered files out of ${matrix.sourceFileCount} source files.`);
+          NODE
 
       - name: Build Pages catalog
         run: node scripts/build-pages-catalog.mjs _sut/ecommerce-app/frontend/.playwright-impact/matrix.json
