@@ -6,8 +6,10 @@ export { expect };
 export { collectImpactCoverage };
 
 export function attachImpactCoverage(playwrightTest) {
-  playwrightTest.afterEach(async ({ page }, testInfo) => {
-    await collectImpactCoverage({ page, testInfo });
+  return playwrightTest.extend({
+    _impactCoverage: [async ({ page }, use, testInfo) => {
+      await use();
+      await collectImpactCoverage({ page, testInfo });
+    }, { auto: true }]
   });
-  return playwrightTest;
 }

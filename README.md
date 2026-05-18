@@ -73,9 +73,11 @@ For repos that already own their Playwright `test` fixture, the lower-level coll
 import { test as base, expect } from '@playwright/test';
 import { collectImpactCoverage } from 'playwright-impact-analysis/playwright/collector';
 
-export const test = base.extend({});
-test.afterEach(async ({ page }, testInfo) => {
-  await collectImpactCoverage({ page, testInfo });
+export const test = base.extend({
+  impactCoverage: [async ({ page }, use, testInfo) => {
+    await use();
+    await collectImpactCoverage({ page, testInfo });
+  }, { auto: true }],
 });
 export { expect };
 ```
