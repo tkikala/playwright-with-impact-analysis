@@ -65,6 +65,8 @@ els.coverageFilter.addEventListener('change', () => {
 els.mapView.addEventListener('click', () => setView('map'));
 els.circleView.addEventListener('click', () => setView('circle'));
 window.addEventListener('resize', () => requestAnimationFrame(renderActiveGraph));
+els.fileMap.addEventListener('scroll', scheduleMapEdges, { passive: true });
+els.testMap.addEventListener('scroll', scheduleMapEdges, { passive: true });
 
 loadCatalog();
 
@@ -376,10 +378,8 @@ function isRelated(type, id) {
 function renderEdges() {
   if (state.view !== 'map') return;
 
-  const fileNodes = new Map([...document.querySelectorAll('[data-node-type="file"]')]
-    .map((node) => [node.dataset.id, node]));
-  const testNodes = new Map([...document.querySelectorAll('[data-node-type="test"]')]
-    .map((node) => [node.dataset.id, node]));
+  const fileNodes = visibleNodeMap('[data-node-type="file"]', els.fileMap);
+  const testNodes = visibleNodeMap('[data-node-type="test"]', els.testMap);
   const graphBox = els.edgeLayer.getBoundingClientRect();
   const visibleLinks = state.links.filter((link) => fileNodes.has(link.fileId) && testNodes.has(link.testId));
   const selectedLinks = visibleLinks.filter((link) => {
@@ -409,6 +409,25 @@ function renderEdges() {
   }
 }
 
+function scheduleMapEdges() {
+  if (state.view !== 'map') return;
+  if (scheduleMapEdges.frame) return;
+  scheduleMapEdges.frame = requestAnimationFrame(() => {
+    scheduleMapEdges.frame = 0;
+    renderEdges();
+  });
+}
+
+function visibleNodeMap(selector, viewportElement) {
+  const viewport = viewportElement.getBoundingClientRect();
+  return new Map([...document.querySelectorAll(selector)]
+    .filter((node) => {
+      const box = node.getBoundingClientRect();
+      return box.bottom >= viewport.top && box.top <= viewport.bottom;
+    })
+    .map((node) => [node.dataset.id, node]));
+}
+
 function renderActiveGraph() {
   if (state.view === 'circle') {
     renderCircleGraph();
@@ -424,8 +443,7 @@ function renderCircleGraph() {
   const height = Math.max(box.height, 520);
   const cx = width / 2;
   const cy = height / 2;
-  const radius = Math.min(width, height) * 0.42;
-  const innerRadius = radius * 0.55;
+  const radius = Math.min(width, height) * 0.39;
   const files = filteredFiles();
   const fileIds = new Set(files.map((file) => file.id));
   const tests = filteredTests().filter((test) => {
@@ -434,8 +452,8 @@ function renderCircleGraph() {
   });
   const testIds = new Set(tests.map((test) => test.id));
   const links = state.links.filter((link) => fileIds.has(link.fileId) && testIds.has(link.testId));
-  const filePositions = radialPositions(files, cx, cy, radius, -120, 120);
-  const testPositions = radialPositions(tests, cx, cy, innerRadius, 120, 360);
+  const filePositions = radialPositions(files, cx, cy, radius, 118, 242);
+  const testPositions = radialPositions(tests, cx, cy, radius, -62, 62);
 
   svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
   svg.innerHTML = '';
@@ -638,7 +656,8 @@ function nodeRadius(linkCount) {
 function shouldLabelNode(item, index, total) {
   if (state.selected?.id === item.id) return true;
   if (isRelated(item.files ? 'test' : 'file', item.id)) return true;
-  const stride = total > 80 ? 8 : total > 45 ? 5 : total > 28 ? 3 : 2;
+  if (total > 48) return false;
+  const stride = total > 32 ? 8 : total > 20 ? 5 : total > 12 ? 3 : 2;
   return index % stride === 0;
 }
 

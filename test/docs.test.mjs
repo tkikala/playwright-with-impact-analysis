@@ -20,7 +20,9 @@ test('GitHub Pages app has the assets required to render a matrix', async () => 
   assert.match(app, /sample-matrix\.json/);
   assert.match(app, /sourceFiles/);
   assert.match(app, /renderCircleGraph/);
+  assert.match(app, /visibleNodeMap/);
   assert.match(css, /\.edge/);
+  assert.match(css, /\[hidden\]/);
   assert.match(css, /circle-graph/);
   assert.match(css, /uncovered/);
   assert.ok(Object.keys(matrix.files).length > 0);
