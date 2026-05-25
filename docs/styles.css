@@ -157,6 +157,89 @@ button {
   margin-bottom: 14px;
 }
 
+.diagnostics-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.9fr);
+  gap: 14px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.diagnostics-panel h2 {
+  margin-bottom: 10px;
+}
+
+.diagnostic-list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.diagnostic {
+  min-height: 68px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.diagnostic.warn {
+  border-color: rgba(178, 105, 0, 0.45);
+  background: #fffaf0;
+}
+
+.diagnostic span,
+.preview-result span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.diagnostic strong {
+  display: block;
+  margin-top: 6px;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.preview-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.preview-controls textarea {
+  width: 100%;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 11px;
+  background: #fbfcfd;
+  color: var(--ink);
+  font: inherit;
+}
+
+.preview-result {
+  min-height: 46px;
+  margin-top: 8px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.preview-result strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 13px;
+}
+
 .coverage-panel {
   display: grid;
   grid-template-columns: 240px 1fr;
@@ -556,8 +639,14 @@ button {
 
   .summary,
   .coverage-panel,
+  .diagnostics-panel,
   .toolbar,
   .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .diagnostic-list,
+  .preview-controls {
     grid-template-columns: 1fr;
   }
 

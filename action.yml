@@ -23,6 +23,10 @@ inputs:
     description: "Directory where the Playwright fixture writes per-test coverage records."
     required: false
     default: .playwright-impact/coverage
+  report-path:
+    description: "Path to the generated impact report."
+    required: false
+    default: .playwright-impact/report.json
   base-ref:
     description: "Git ref used for PR diffs."
     required: false
@@ -59,6 +63,18 @@ inputs:
     description: "Comma/newline separated source roots to include in the visualization inventory."
     required: false
     default: "src"
+  report-mode:
+    description: "Where to publish the report: comment, summary, none, or auto. auto comments on PRs and writes summaries elsewhere."
+    required: false
+    default: auto
+  dashboard-url:
+    description: "Optional dashboard URL included in reports."
+    required: false
+    default: ""
+  fail-on-diagnostics:
+    description: "Fail when critical diagnostics detect a missing or malformed matrix or no coverage records."
+    required: false
+    default: "false"
 
 outputs:
   decision:
@@ -67,6 +83,18 @@ outputs:
     description: "Newline separated impacted Playwright spec files."
   reason:
     description: "Human readable explanation of the decision."
+  report-path:
+    description: "Path to the generated impact report."
+  selected-count:
+    description: "Number of selected Playwright spec files."
+  covered-files:
+    description: "Number of covered SUT files in the matrix."
+  uncovered-files:
+    description: "Number of source files with no Playwright coverage in the matrix."
+  zero-link-tests:
+    description: "Number of tests that ran without linked SUT files."
+  coverage-rate:
+    description: "Percentage of source files covered by the matrix."
 
 runs:
   using: node20

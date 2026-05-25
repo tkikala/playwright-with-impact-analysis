@@ -4,6 +4,21 @@
   "description": "Deterministic Playwright test impact analysis from frontend runtime coverage.",
   "type": "module",
   "main": "src/cli.mjs",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tkikala/playwright-with-impact-analysis.git"
+  },
+  "homepage": "https://tkikala.github.io/playwright-with-impact-analysis/",
+  "bugs": {
+    "url": "https://github.com/tkikala/playwright-with-impact-analysis/issues"
+  },
+  "files": [
+    "action.yml",
+    "src",
+    "README.md",
+    "LICENSE",
+    "examples"
+  ],
   "bin": {
     "pw-impact": "src/cli.mjs"
   },
@@ -25,6 +40,9 @@
     "ci"
   ],
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=20"
   },

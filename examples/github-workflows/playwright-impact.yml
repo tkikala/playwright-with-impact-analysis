@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   playwright:
@@ -29,5 +30,7 @@ jobs:
         uses: your-org/playwright-impact-analysis@v1
         with:
           mode: auto
-          test-command: npx playwright test
+          test-command: PW_IMPACT_COVERAGE=true npx playwright test
           matrix-storage: branch
+          report-mode: auto
+          dashboard-url: https://your-org.github.io/your-repo/

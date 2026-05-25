@@ -7,21 +7,28 @@ import { readMatrix, writeMatrix } from './matrix.mjs';
 import { shellQuote } from './select.mjs';
 
 export async function loadMatrix(options = {}) {
+  const result = await loadMatrixWithSource(options);
+  return result.matrix;
+}
+
+export async function loadMatrixWithSource(options = {}) {
   const repoRoot = options.repoRoot ?? process.cwd();
   const matrixPath = options.matrixPath ?? '.playwright-impact/matrix.json';
   const storage = options.storage ?? 'branch';
-  if (storage === 'none') return null;
+  if (storage === 'none') return { matrix: null, source: 'none' };
 
   const local = await readMatrix(matrixPath, repoRoot).catch(() => null);
-  if (local) return local;
+  if (local) return { matrix: local, source: 'file' };
 
-  if (storage !== 'branch') return null;
+  if (storage !== 'branch') return { matrix: null, source: 'missing' };
 
   const dataBranch = options.dataBranch ?? 'playwright-impact-data';
   await fetchBranch(dataBranch, repoRoot);
   const raw = await capture(`git show origin/${dataBranch}:${shellQuote(matrixPath)}`, { cwd: repoRoot })
     .catch(() => null);
-  return raw ? JSON.parse(raw) : null;
+  return raw
+    ? { matrix: JSON.parse(raw), source: `branch:${dataBranch}` }
+    : { matrix: null, source: 'missing' };
 }
 
 export async function saveMatrix(matrix, options = {}) {

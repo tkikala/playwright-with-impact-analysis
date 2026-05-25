@@ -62,6 +62,21 @@
         </div>
       </section>
 
+      <section class="diagnostics-panel" aria-label="Matrix diagnostics">
+        <div>
+          <h2>Diagnostics</h2>
+          <div id="diagnostics" class="diagnostic-list"></div>
+        </div>
+        <div>
+          <h2>PR decision preview</h2>
+          <div class="preview-controls">
+            <textarea id="changedFilesPreview" rows="4" placeholder="Paste changed files, one per line"></textarea>
+            <button id="runPreview" type="button">Preview</button>
+          </div>
+          <div id="previewResult" class="preview-result">Paste changed files to preview impacted specs.</div>
+        </div>
+      </section>
+
       <section class="toolbar" aria-label="Visualization controls">
         <input id="search" type="search" placeholder="Filter files or tests">
         <select id="groupFilter" aria-label="Filter by SUT group">

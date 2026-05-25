@@ -39,7 +39,10 @@ test('CLI record and select exercise the impact-analysis product loop', async ()
   ], { cwd: workspace });
 
   const matrix = JSON.parse(await fs.readFile(path.join(workspace, '.playwright-impact/matrix.json'), 'utf8'));
+  const recordReport = JSON.parse(await fs.readFile(path.join(workspace, '.playwright-impact/report.json'), 'utf8'));
   assert.equal(matrix.testCount, 2);
+  assert.equal(recordReport.decision, 'record');
+  assert.equal(recordReport.matrix.coveredFiles, 2);
   assert.deepEqual(matrix.files['src/Button.tsx'], [
     'tests/button.spec.ts::chromium::renders button'
   ]);
@@ -60,6 +63,17 @@ test('CLI record and select exercise the impact-analysis product loop', async ()
     decision: 'full',
     specs: []
   });
+
+  const { stdout: diagnoseStdout } = await execFileAsync(process.execPath, [
+    cliPath,
+    'diagnose',
+    '--matrix-path',
+    '.playwright-impact/matrix.json',
+    '--json'
+  ], { cwd: workspace });
+  const diagnose = JSON.parse(diagnoseStdout);
+  assert.equal(diagnose.command, 'diagnose');
+  assert.equal(diagnose.matrix.coverageRate, 100);
 });
 
 async function selectChanged(cwd, changedFiles) {
@@ -69,7 +83,8 @@ async function selectChanged(cwd, changedFiles) {
     '--matrix-path',
     '.playwright-impact/matrix.json',
     '--changed-files',
-    changedFiles.join(',')
+    changedFiles.join(','),
+    '--json'
   ], { cwd });
   const result = JSON.parse(stdout);
   return {

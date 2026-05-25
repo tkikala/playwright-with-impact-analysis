@@ -39,12 +39,20 @@ jobs:
           working-directory: fixtures/demo-app
           matrix-storage: file
           matrix-path: .playwright-impact/matrix.json
+          report-mode: none
           changed-files: src/Button.tsx
 
       - name: Assert action outputs
         env:
           DECISION: ${{ steps.impact.outputs.decision }}
           SPECS: ${{ steps.impact.outputs.specs }}
+          REPORT_PATH: ${{ steps.impact.outputs.report-path }}
+          SELECTED_COUNT: ${{ steps.impact.outputs.selected-count }}
+          COVERAGE_RATE: ${{ steps.impact.outputs.coverage-rate }}
         run: |
           test "$DECISION" = "selected"
           printf '%s\n' "$SPECS" | grep -Fx "tests/button.spec.ts"
+          test "$REPORT_PATH" = ".playwright-impact/report.json"
+          test "$SELECTED_COUNT" = "1"
+          test "$COVERAGE_RATE" = "100"
+          test -f fixtures/demo-app/.playwright-impact/report.json

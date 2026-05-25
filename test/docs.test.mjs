@@ -16,13 +16,17 @@ test('GitHub Pages app has the assets required to render a matrix', async () => 
   assert.match(html, /app\.js/);
   assert.match(html, /matrixCatalog/);
   assert.match(html, /noLinkTestCount/);
+  assert.match(html, /changedFilesPreview/);
+  assert.match(html, /Diagnostics/);
   assert.match(app, /data\/manifest\.json/);
   assert.match(app, /sample-matrix\.json/);
   assert.match(app, /sourceFiles/);
   assert.match(app, /renderCircleGraph/);
+  assert.match(app, /previewSelection/);
   assert.match(app, /visibleNodeMap/);
   assert.match(css, /\.edge/);
   assert.match(css, /\[hidden\]/);
+  assert.match(css, /diagnostics-panel/);
   assert.match(css, /circle-graph/);
   assert.match(css, /uncovered/);
   assert.ok(Object.keys(matrix.files).length > 0);

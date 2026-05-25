@@ -78,6 +78,11 @@ jobs:
             throw new Error(`Expected populated impact matrix, got ${matrix.testCount || 0} tests and ${matrix.fileCount || 0} files`);
           }
 
+          const zeroLinkTests = Object.values(matrix.tests ?? {}).filter((test) => !test.files?.length).length;
+          if (zeroLinkTests > 0) {
+            throw new Error(`Expected zero tests without linked SUT files, got ${zeroLinkTests}`);
+          }
+
           console.log(`Matrix contains ${matrix.testCount} tests across ${matrix.fileCount} covered files out of ${matrix.sourceFileCount} source files.`);
           NODE
 

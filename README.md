@@ -23,6 +23,18 @@ The Pages deployment publishes a matrix catalog. Each Pages pipeline run clones 
 
 Instrument your frontend app for Istanbul only during Playwright runs. For Vite, that usually means `vite-plugin-istanbul`; for Webpack/Next, use `babel-plugin-istanbul`.
 
+Until the first npm release is published, install from GitHub:
+
+```bash
+npm install -D github:tkikala/playwright-with-impact-analysis vite-plugin-istanbul
+```
+
+After `v0.1.0` is published:
+
+```bash
+npm install -D playwright-impact-analysis vite-plugin-istanbul
+```
+
 For Vite:
 
 ```ts
@@ -45,6 +57,8 @@ export default defineConfig({
 ```
 
 Then run the app with `PW_IMPACT_COVERAGE=true` in CI so `window.__coverage__` exists during Playwright execution.
+
+For Next.js or Webpack projects, use `babel-plugin-istanbul` in the test build only and keep the same rule: the Playwright-served app must expose `window.__coverage__` only when impact recording is enabled.
 
 Then import the fixture in your Playwright tests:
 
@@ -94,6 +108,7 @@ on:
 
 permissions:
   contents: write
+  issues: write
 
 jobs:
   playwright:
@@ -114,13 +129,28 @@ jobs:
       - uses: tkikala/playwright-with-impact-analysis@v0.1.0
         with:
           mode: auto
-          test-command: npx playwright test
+          test-command: PW_IMPACT_COVERAGE=true npx playwright test
+          dashboard-url: https://your-org.github.io/your-repo/
 ```
 
 `mode: auto` does this:
 
 - On `push` to `main`: runs the full Playwright suite, collects coverage, builds the matrix, and pushes it to `playwright-impact-data`.
-- On `pull_request`: loads the matrix, calculates impacted specs, and runs either selected specs, no specs, or the full suite.
+- On `pull_request`: loads the matrix, calculates impacted specs, runs either selected specs, no specs, or the full suite, and writes a PR report.
+
+The action writes `.playwright-impact/report.json` and exposes these outputs:
+
+- `decision`: `record`, `selected`, `full`, or `none`
+- `specs`: newline-separated selected spec files
+- `reason`: human-readable decision reason
+- `report-path`: generated report path
+- `selected-count`, `covered-files`, `uncovered-files`, `zero-link-tests`, `coverage-rate`
+
+Reporting inputs:
+
+- `report-mode`: `auto`, `comment`, `summary`, or `none`. `auto` comments on PRs and writes a job summary elsewhere.
+- `dashboard-url`: optional dashboard link included in reports.
+- `fail-on-diagnostics`: set to `true` to fail on critical matrix health issues.
 
 ## CLI
 
@@ -128,6 +158,7 @@ jobs:
 pw-impact record --test-command "npx playwright test"
 pw-impact select --changed-files "src/pages/Dashboard.tsx"
 pw-impact run --base-ref origin/main --test-command "npx playwright test"
+pw-impact diagnose --matrix-path .playwright-impact/matrix.json
 ```
 
 `record` also scans source files under `src` by default and stores them in `sourceFiles`, so the visualization can show files with no Playwright coverage. For apps with multiple source roots:
@@ -135,6 +166,28 @@ pw-impact run --base-ref origin/main --test-command "npx playwright test"
 ```bash
 pw-impact record --source-roots "app,components,lib" --test-command "npx playwright test"
 ```
+
+Every command writes `.playwright-impact/report.json`. Use `--report-path` to change it and `--json` to print the full report JSON to stdout.
+
+## Recommended Rollout
+
+1. Start with `mode: record` on `main` only. Confirm the report has coverage records and zero-link tests are expected or zero.
+2. Add PR runs with `mode: select` and `report-mode: comment`. Review decisions without skipping tests yet.
+3. Switch PRs to `mode: run` once fallback reasons, uncovered files, and selected specs look trustworthy.
+4. Keep a scheduled or main-branch full-suite recording job so the matrix stays fresh.
+
+## Real Repo Recipe
+
+This repository's Pages workflow is the reference integration recipe:
+
+1. Clone `sourcegraph/ecommerce-app`.
+2. Install backend and frontend dependencies.
+3. Install this package and `vite-plugin-istanbul` into the frontend.
+4. Patch Playwright tests to import an impact-aware fixture.
+5. Run `pw-impact record` with the real Playwright command and JSON report.
+6. Publish the matrix into the Pages catalog.
+
+That workflow proves the product against a non-trivial open-source SUT with dozens of tests and source files.
 
 ## Testing This Package
 
@@ -174,6 +227,34 @@ The integration test uses `fixtures/demo-app` with pre-seeded coverage records t
       "files": ["src/pages/Dashboard.tsx"]
     }
   }
+}
+```
+
+## Report Format
+
+```json
+{
+  "version": 1,
+  "decision": "selected",
+  "reason": "1 impacted Playwright spec file found.",
+  "changedFiles": ["src/Button.tsx"],
+  "specs": ["tests/button.spec.ts"],
+  "selectedCount": 1,
+  "estimates": {
+    "totalSpecs": 12,
+    "skippedSpecs": 11
+  },
+  "matrix": {
+    "source": "branch:playwright-impact-data",
+    "baseCommit": "abc123",
+    "testCount": 34,
+    "coveredFiles": 53,
+    "sourceFiles": 62,
+    "uncoveredFiles": 9,
+    "zeroLinkTests": 0,
+    "coverageRate": 85
+  },
+  "warnings": []
 }
 ```
 

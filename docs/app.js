@@ -29,6 +29,10 @@ const els = {
   coverageRate: document.querySelector('#coverageRate'),
   coverageMeter: document.querySelector('#coverageMeter'),
   generatedAt: document.querySelector('#generatedAt'),
+  diagnostics: document.querySelector('#diagnostics'),
+  changedFilesPreview: document.querySelector('#changedFilesPreview'),
+  runPreview: document.querySelector('#runPreview'),
+  previewResult: document.querySelector('#previewResult'),
   visibleFileCount: document.querySelector('#visibleFileCount'),
   visibleTestCount: document.querySelector('#visibleTestCount'),
   details: document.querySelector('#details'),
@@ -62,6 +66,7 @@ els.coverageFilter.addEventListener('change', () => {
   state.coverage = els.coverageFilter.value;
   render();
 });
+els.runPreview.addEventListener('click', () => renderPreview());
 els.mapView.addEventListener('click', () => setView('map'));
 els.circleView.addEventListener('click', () => setView('circle'));
 window.addEventListener('resize', () => requestAnimationFrame(renderActiveGraph));
@@ -153,6 +158,8 @@ function setMatrix(matrix, sourceLabel) {
   state.selected = null;
   state.group = '';
   state.query = '';
+  els.changedFilesPreview.value = '';
+  els.previewResult.textContent = 'Paste changed files to preview impacted specs.';
   els.search.value = '';
   els.density.value = state.density;
   updateGroupFilter();
@@ -222,6 +229,45 @@ function renderSummary(sourceLabel) {
   els.coverageRate.textContent = `${coverageRate}%`;
   els.coverageMeter.style.width = `${coverageRate}%`;
   els.generatedAt.textContent = sourceLabel || formatDate(state.matrix.generatedAt);
+  renderDiagnostics({ coveredFiles, uncoveredFiles, coverageRate });
+}
+
+function renderDiagnostics(summary) {
+  const zeroLinkTests = state.tests.filter((test) => test.files.length === 0).length;
+  const diagnostics = [
+    {
+      label: 'Matrix commit',
+      value: state.matrix.baseCommit ? state.matrix.baseCommit.slice(0, 8) : 'unknown',
+      tone: state.matrix.baseCommit ? 'ok' : 'warn'
+    },
+    {
+      label: 'Generated',
+      value: formatDate(state.matrix.generatedAt ?? state.matrix.catalog?.generatedAt),
+      tone: 'ok'
+    },
+    {
+      label: 'Source coverage',
+      value: `${summary.coveredFiles}/${state.files.length} files (${summary.coverageRate}%)`,
+      tone: summary.uncoveredFiles ? 'warn' : 'ok'
+    },
+    {
+      label: 'Uncovered files',
+      value: summary.uncoveredFiles,
+      tone: summary.uncoveredFiles ? 'warn' : 'ok'
+    },
+    {
+      label: 'Tests without links',
+      value: zeroLinkTests,
+      tone: zeroLinkTests ? 'warn' : 'ok'
+    }
+  ];
+
+  els.diagnostics.innerHTML = diagnostics.map((item) => `
+    <div class="diagnostic ${item.tone}">
+      <span>${escapeHtml(item.label)}</span>
+      <strong>${escapeHtml(item.value)}</strong>
+    </div>
+  `).join('');
 }
 
 function updateGroupFilter() {
@@ -553,6 +599,85 @@ function renderDetails() {
     <p>${noCoverageCopy}</p>
     <div class="details-list">${test.files.map((file) => `<span class="pill">${escapeHtml(file)}</span>`).join('')}</div>
   `;
+}
+
+function renderPreview() {
+  const changedFiles = els.changedFilesPreview.value
+    .split(/[\n,]/)
+    .map((file) => file.trim())
+    .filter(Boolean);
+  const selection = previewSelection(changedFiles);
+  const specs = selection.specs.length
+    ? `<div class="details-list">${selection.specs.map((spec) => `<span class="pill">${escapeHtml(spec)}</span>`).join('')}</div>`
+    : '';
+
+  els.previewResult.innerHTML = `
+    <strong>${escapeHtml(selection.decision.toUpperCase())}</strong>
+    <span>${escapeHtml(selection.reason)}</span>
+    ${specs}
+  `;
+}
+
+function previewSelection(changedFiles) {
+  if (!changedFiles.length) {
+    return { decision: 'none', specs: [], reason: 'No changed files were provided.' };
+  }
+
+  const impactedTestIds = new Set();
+  for (const file of changedFiles) {
+    const normalized = normalizePreviewPath(file);
+    if (isGlobalChange(normalized)) {
+      return { decision: 'full', specs: [], reason: `${normalized} is configured as a global-change file.` };
+    }
+
+    const testIds = state.matrix.files?.[normalized];
+    if (testIds?.length) {
+      for (const testId of testIds) impactedTestIds.add(testId);
+      continue;
+    }
+
+    if (isRelevantPreviewSource(normalized)) {
+      return { decision: 'full', specs: [], reason: `Changed source file is not in the matrix: ${normalized}` };
+    }
+  }
+
+  const specs = [...new Set([...impactedTestIds]
+    .map((testId) => state.tests.find((test) => test.id === testId)?.spec)
+    .filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b));
+
+  if (!specs.length) return { decision: 'none', specs: [], reason: 'No impacted Playwright specs were found.' };
+  return { decision: 'selected', specs, reason: `${specs.length} impacted Playwright spec file${specs.length === 1 ? '' : 's'} found.` };
+}
+
+function normalizePreviewPath(file) {
+  return file.replace(/^file:\/\//, '')
+    .replace(/^\.\//, '')
+    .replaceAll('\\', '/')
+    .split('?')[0]
+    .split('#')[0];
+}
+
+function isGlobalChange(file) {
+  return [
+    'package.json',
+    'package-lock.json',
+    'pnpm-lock.yaml',
+    'yarn.lock',
+    'bun.lockb',
+    'playwright.config.ts',
+    'playwright.config.js',
+    'vite.config.ts',
+    'vite.config.js',
+    'webpack.config.js',
+    'tsconfig.json'
+  ].includes(file);
+}
+
+function isRelevantPreviewSource(file) {
+  if (file.startsWith('.github/') || file.endsWith('.md') || file.endsWith('.txt')) return false;
+  return ['.js', '.jsx', '.ts', '.tsx', '.mjs', '.cjs', '.vue', '.svelte', '.css', '.scss', '.sass', '.less', '.html']
+    .some((extension) => file.endsWith(extension));
 }
 
 function radialPositions(items, cx, cy, radius, startDegrees, endDegrees) {
